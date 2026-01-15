@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 import re
+import html
 from pathlib import Path
 from typing import List, Optional
 
@@ -26,7 +27,7 @@ except ImportError:
 def extract_text_from_pdf(pdf_path: str) -> str:
     """Extract text content from a PDF file."""
     if PdfReader is None:
-        raise ImportError("PyPDF2 is required for PDF processing. Install it with: pip install pypdf2")
+        raise ImportError("PyPDF2 is required for PDF processing. Install it with: pip install PyPDF2")
     
     try:
         reader = PdfReader(pdf_path)
@@ -85,11 +86,14 @@ def process_content_to_slides(content: str, max_slides: int = 10) -> List[dict]:
     
     # First slide: Title (use first substantial line as title)
     title = "Presentation"
+    title_para = None
     for para in paragraphs[:5]:
         if len(para) < 100 and len(para) > 5:
             title = para
-            paragraphs.remove(para)
+            title_para = para
             break
+    if title_para:
+        paragraphs.remove(title_para)
     
     slides.append({
         'title': title,
@@ -179,11 +183,14 @@ def generate_slide_markdown(slide: dict, slide_number: int) -> str:
 
 def generate_slide_html(slide: dict, slide_number: int) -> str:
     """Generate HTML content for a single slide."""
-    html = f"""<!DOCTYPE html>
+    # Escape HTML to prevent XSS vulnerabilities
+    title_escaped = html.escape(slide['title'])
+    
+    html_content = f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Slide {slide_number}: {slide['title']}</title>
+    <title>Slide {slide_number}: {title_escaped}</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -219,21 +226,22 @@ def generate_slide_html(slide: dict, slide_number: int) -> str:
 <body>
     <div class="slide">
         <div class="slide-number">Slide {slide_number}</div>
-        <h1>{slide['title']}</h1>
+        <h1>{title_escaped}</h1>
         <ul>
 """
     
     for point in slide['content']:
         point = point.strip()
         if point:
-            html += f"            <li>{point}</li>\n"
+            point_escaped = html.escape(point)
+            html_content += f"            <li>{point_escaped}</li>\n"
     
-    html += """        </ul>
+    html_content += """        </ul>
     </div>
 </body>
 </html>
 """
-    return html
+    return html_content
 
 
 def save_slides(slides: List[dict], output_dir: str, format_type: str = "both"):
@@ -303,7 +311,8 @@ def save_slides(slides: List[dict], output_dir: str, format_type: str = "both"):
     <ul class="slide-list">
 """)
             for i, slide in enumerate(slides, 1):
-                f.write(f'        <li><a href="slide_{i:02d}.html">Slide {i}: {slide["title"]}</a></li>\n')
+                title_escaped = html.escape(slide["title"])
+                f.write(f'        <li><a href="slide_{i:02d}.html">Slide {i}: {title_escaped}</a></li>\n')
             f.write("""    </ul>
 </body>
 </html>

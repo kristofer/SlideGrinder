@@ -19,7 +19,7 @@ setup(
     ],
     python_requires=">=3.7",
     install_requires=[
-        "pypdf2>=3.0.0",
+        "PyPDF2>=3.0.0",
         "beautifulsoup4>=4.12.0",
         "requests>=2.31.0",
         "markdown>=3.5.0",
