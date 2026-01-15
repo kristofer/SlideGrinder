@@ -2,6 +2,22 @@
 
 A command-line tool that converts PDFs or web articles into presentation slides.
 
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Generate slides from a PDF
+python slidegrinder.py examples/sample.pdf
+
+# Generate slides from a URL
+python slidegrinder.py https://example.com/article
+
+# View the generated slides
+open slides/index.html
+```
+
 ## Description
 
 SlideGrinder takes a PDF file or a URL to a blog post/article and automatically generates a series of presentation slides containing the key points from the input. The tool extracts content, processes it intelligently, and produces clean, ready-to-use slides in both Markdown and HTML formats.
